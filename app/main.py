@@ -7,8 +7,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from pydantic import BaseModel
-from passlib.context import CryptContext
-from . import models
+
+from . import models,utils
 from sqlalchemy.orm import Session, sessionmaker
 from fastapi import Depends
 from .database import  engine, SessionLocal
@@ -16,7 +16,7 @@ from app import database, schemas
 # Importing the Sqlalchemy ORM parts in database.py file
 
 
-pwd_context=CryptContext(schemes=["bcrypt"], deprecated="auto")  # For hashing the passwords
+
 
 # Importing the database connection and session from database.py file
 
@@ -186,7 +186,7 @@ def update_posts(id:int,user_id:int, updated_post:schemas.PostUpdate, db:Session
 
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponse)
 def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
-    hashed_password=pwd_context.hash(user.password)  # Hashing the password using passlib,so that it is stored securely in the database.
+    hashed_password=utils.hash(user.password)  # Hashing the password ,so that it is stored securely in the database.
     user.password = hashed_password  # Setting the hashed password to the user object
     new_user = models.User(**user.model_dump())
     db.add(new_user)
