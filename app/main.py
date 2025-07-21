@@ -219,3 +219,16 @@ def update_user(user_id: int, user: schemas.UserUpdateResponse, db: Session = De
     user_query.update(updated_data, synchronize_session=False)
     db.commit()
     return user_query.first()  # <-- Return the model instance directly because of `orm_mode = True` in the schema
+
+
+@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user_query = db.query(models.User).filter(models.User.user_id == user_id)
+    user = user_query.first()
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {user_id} was not found")
+    
+    user_query.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
