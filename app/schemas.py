@@ -59,4 +59,23 @@ class UserResponse(BaseModel): #Response model must be passed to the response_mo
     class Config:
         orm_mode = True  # This allows Pydantic to read data from SQLAlchemy models
         # It allows us to use the SQLAlchemy model directly in the response
-        # without having to convert it to a dictionary first.    
+        # without having to convert it to a dictionary first.
+
+class UserUpdate(BaseModel):
+    
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+    class Config:
+        orm_mode = True  # This allows Pydantic to read data from SQLAlchemy models
+        # It allows us to use the SQLAlchemy model directly in the response
+        # without having to convert it to a dictionary first.
+
+class UserUpdateResponse(BaseModel):
+    email: EmailStr
+    created_at: datetime = datetime.now()
+
+    class Config:
+        orm_mode = True  # This allows Pydantic to read data from SQLAlchemy models
+        # It allows us to use the SQLAlchemy model directly in the response
+        # without having to convert it to a dictionary first.
