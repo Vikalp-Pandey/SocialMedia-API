@@ -193,4 +193,9 @@ def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     return {"data": new_user}  # Returning the new user in the form of a dictionary
-  
+
+
+@app.get("/users", response_model=List[schemas.UserResponse])
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(models.User).order_by(models.User.user_id.asc()).all()
+    return users
