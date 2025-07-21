@@ -7,15 +7,19 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from pydantic import BaseModel
-from .import models
-
-
-
+from passlib.context import CryptContext
+from . import models
+from sqlalchemy.orm import Session, sessionmaker
+from fastapi import Depends
+from .database import  engine, SessionLocal
+from app import database, schemas
 # Importing the Sqlalchemy ORM parts in database.py file
 
 
-from .database import  engine, SessionLocal
-from app import database, schemas
+pwd_context=CryptContext(schemes=["bcrypt"], deprecated="auto")  # For hashing the passwords
+
+# Importing the database connection and session from database.py file
+
 models.Base.metadata.create_all(bind=database.engine)  # Creating the database tables (based on the models) in the connected database(just like migrations in Django)
 # In your code where you create tables:
 models.Base.metadata.create_all(bind=engine)  # recreate tables with updated schema
@@ -39,8 +43,7 @@ app=FastAPI()
 
 
 # Checking the connection to the database
-from sqlalchemy.orm import Session, sessionmaker
-from fastapi import Depends
+
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
     return {"status": "Success"}
@@ -166,7 +169,7 @@ def delete_posts(id:int, db:Session=Depends(get_db)): #If this id is not provide
 
 # 4) Updating a Post:
 
-# Not Working
+
 @app.put("/posts/user_id={user_id}/id={id}")
 
 def update_posts(id:int,user_id:int, updated_post:schemas.PostUpdate, db:Session=Depends(get_db)):
@@ -183,8 +186,11 @@ def update_posts(id:int,user_id:int, updated_post:schemas.PostUpdate, db:Session
 
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponse)
 def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
+    hashed_password=pwd_context.hash(user.password)  # Hashing the password using passlib,so that it is stored securely in the database.
+    user.password = hashed_password  # Setting the hashed password to the user object
     new_user = models.User(**user.model_dump())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return {"data": new_user}  # Returning the new user in the form of a dictionary
+  
