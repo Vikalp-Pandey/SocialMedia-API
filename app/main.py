@@ -199,3 +199,23 @@ def create_user(user:schemas.UserCreate, db: Session = Depends(get_db)):
 def get_users(db: Session = Depends(get_db)):
     users = db.query(models.User).order_by(models.User.user_id.asc()).all()
     return users
+
+
+@app.get("/users/{user_id}", response_model=(schemas.UserResponse))
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {user_id} was not found")
+    return user  
+
+@app.patch("/users/{user_id}", response_model=schemas.UserUpdateResponse)
+def update_user(user_id: int, user: schemas.UserUpdateResponse, db: Session = Depends(get_db)):
+    user_query = db.query(models.User).filter(models.User.user_id == user_id)
+    existing_user = user_query.first()
+    
+    if not existing_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {user_id} was not found")
+    updated_data = user.model_dump(exclude_unset=True)
+    user_query.update(updated_data, synchronize_session=False)
+    db.commit()
+    return user_query.first()  # <-- Return the model instance directly because of `orm_mode = True` in the schema
